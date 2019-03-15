@@ -6,12 +6,12 @@
 .EXAMPLE
    Get-EarthquakeInfo # Gets full data as a list
 .EXAMPLE
-   Get-EarthquakeInfo -Take 50 | Format-Table #Last 50 earthquake records printed as a table for better readability
+   Get-EarthquakeInfo -ResultSize 50 | Format-Table #Last 50 earthquake records printed as a table for better readability
 .EXAMPLE
-   Get-EarthquakeInfo -Url "http://www.koeri.boun.edu.tr/scripts/lst6.asp" -Take 50 | Alternatice URL is used in case of outage or adress change
+   Get-EarthquakeInfo -Url "http://www.koeri.boun.edu.tr/scripts/lst6.asp" # Alternative URL is used in case of outage or adress change
 .INPUTS
    - URL
-   - Take
+   - ResultSize
 .OUTPUTS
    List of Earthquake records
 .NOTES
