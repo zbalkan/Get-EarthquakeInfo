@@ -53,7 +53,7 @@ function Get-EarthquakeInfo
             $Item = $RawList[$i]
             
             $Title = ""
-            $null = ([Regex]::new("[A-Za-z]*")).Matches($Item).Value | Where-Object { $_.Length -gt 0 } | ForEach-Object { $Title += $_ + " "}
+            $null = ([Regex]::new("[A-Za-z\(\)]*")).Matches($Item).Value | Where-Object { $_.Length -gt 0 } | ForEach-Object { $Title += $_ + " "}
             
             $Measurement = ""
             if ($Title.Contains("Quick"))
