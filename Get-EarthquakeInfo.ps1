@@ -39,19 +39,30 @@ function Get-EarthquakeInfo
     )
     
     Process {
-        $Page = Invoke-WebRequest -Uri $URL      
+        $Page = Invoke-WebRequest -Uri $URL
         $Text = ($Page.AllElements | Where-Object { $_.tagName -eq "pre"}).innerText
         [string[]]$RawList = $Text.Split("`n")
         if($ResultSize -eq 0) { $ResultSize = $RawList.Count } 
         $List = New-Object System.Collections.ArrayList
 
-        for($i = 6; $i -lt $ResultSize; $i++){ # Skipping since first 6 rows are titles etc.
+        for($i = 6; $i -lt $ResultSize; $i++){ # Skipping since first 6 rows are titles, etc.
 
             $Item = $RawList[$i]
             
             $Title = ""
             $null = ([Regex]::new("[A-Za-z]*")).Matches($Item).Value | Where-Object { $_.Length -gt 0 } | ForEach-Object { $Title += $_ + " "}
             
+            $Measurement = ""
+            if ($Title.Contains("Quick"))
+            {
+                $Measurement = "Quick"
+            }
+            elseif ($Title.Contains("REVISE"))
+            {
+                $Measurement = "Revised"
+            }
+
+            $Title = $Title.Replace(" Quick","").Replace(" REVISE","")
             $Data = [PSCustomObject]@{
                 Title = $Title
                 Date = ([Regex]::new('\d{4}\.\d{2}\.\d{2}')).Matches($Item).Value
@@ -60,6 +71,7 @@ function Get-EarthquakeInfo
                 Longtitude = ([Regex]::new('\d{2}\.\d{4}')).Matches($Item).Value[1]
                 Depth = ([Regex]::new('\d\.\d')).Matches($Item).Value[4]
                 Magnitude = ([Regex]::new('\d\.\d')).Matches($Item).Value[5]
+                Measurement = $Measurement
             }
             
             $List.Add($Data) | Out-Null # Because Add() method prints index number to console, we need to add Out-Null
