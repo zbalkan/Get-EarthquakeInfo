@@ -11,7 +11,7 @@
    `Get-EarthquakeInfo -Url "http://www.koeri.boun.edu.tr/scripts/lst6.asp" # Alternative URL is used in case of outage or address change`
 .INPUTS
    - URL (Default value: http://www.koeri.boun.edu.tr/scripts/lasteq.asp)
-   - ResultSize (Default value: None. Returns all data.).OUTPUTS
+   - ResultSize (Default value: None. Returns all data.)
 .OUTPUTS
    List of Earthquake records
 .NOTES
