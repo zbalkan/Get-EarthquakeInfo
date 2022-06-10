@@ -39,8 +39,11 @@ function Get-EarthquakeInfo
     )
     
     Process {
-        $Page = Invoke-WebRequest -Uri $URL
-        $Text = ($Page.AllElements | Where-Object { $_.tagName -eq "pre"}).innerText
+        $Page = Invoke-WebRequest -Uri $URL      
+        $StartIndex = $Page.Content.IndexOf("<pre>") + 7
+        $EndIndex = $page.Content.IndexOf("</pre>") - 4
+        $Text = $page.Content.Substring($StartIndex, $EndIndex - $StartIndex)
+        
         [string[]]$RawList = $Text.Split("`n")
         if($ResultSize -eq 0) { $ResultSize = $RawList.Count } 
         $List = New-Object System.Collections.ArrayList
