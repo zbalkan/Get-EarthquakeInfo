@@ -2,16 +2,16 @@
 .Synopsis
    A cmdlet that outputs "Recent Earthquakes" data from KANDILLI OBSERVATORY AND EARTHQUAKE RESEARCH INSTITUTE (KOERI)
 .DESCRIPTION
-   Data is fetched from "http://www.koeri.boun.edu.tr/scripts/lasteq.asp" address.
-.EXAMPLE
-   Get-EarthquakeInfo # Gets full data as a list
-.EXAMPLE
-   Get-EarthquakeInfo -ResultSize 50 | Format-Table #Last 50 earthquake records printed as a table for better readability
-.EXAMPLE
-   Get-EarthquakeInfo -Url "http://www.koeri.boun.edu.tr/scripts/lst6.asp" # Alternative URL is used in case of outage or adress change
+   Data is fetched from "http://www.koeri.boun.edu.tr/scripts/lasteq.asp" address by default. But it can also use Turkish page "http://www.koeri.boun.edu.tr/scripts/lst7.asp".
+.EXAMPLE 1
+   `Get-EarthquakeInfo # Gets full data as a list`
+.EXAMPLE 2
+   `Get-EarthquakeInfo -ResultSize 50 | Format-Table # Last 50 earthquake records printed as a table for better readability`
+.EXAMPLE 3
+   `Get-EarthquakeInfo -Url "http://www.koeri.boun.edu.tr/scripts/lst6.asp" # Alternative URL is used in case of outage or address change`
 .INPUTS
-   - URL
-   - ResultSize
+   - URL (Default value: http://www.koeri.boun.edu.tr/scripts/lasteq.asp)
+   - ResultSize (Default value: None. Returns all data.).OUTPUTS
 .OUTPUTS
    List of Earthquake records
 .NOTES
