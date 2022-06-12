@@ -1,4 +1,4 @@
-<#
+﻿<#
 .Synopsis
    A cmdlet that outputs "Recent Earthquakes" data from KANDILLI OBSERVATORY AND EARTHQUAKE RESEARCH INSTITUTE (KOERI)
 .DESCRIPTION
@@ -80,15 +80,15 @@ function Get-EarthquakeInfo
             $Item = $RawList[$i]
             
             $Title = ""
-            $null = ([Regex]::new("[A-Za-z\(\)]*")).Matches($Item).Value | Where-Object { $_.Length -gt 0 } | ForEach-Object { $Title += $_ + " "}
+            $null = ([Regex]::new("[A-Za-z\(\)İıÖöÜüÇçĞğŞş]*")).Matches($Item).Value | Where-Object { $_.Length -gt 0 } | ForEach-Object { $Title += $_ + " "}
             
             $Measurement = ""
-            if ($Title.Contains("Quick"))
+            if ($Title.Contains("Quick") -or $Title.Contains("İlksel"))
             {
                 $Measurement = "Quick"
                 $Revised = ""
             }
-            elseif ($Title.Contains("REVISE"))
+            elseif ($Title.Contains("REVISE") -or $Title.Contains("REVIZE"))
             {
                 $Measurement = "Revised"
                 $Revised = ([Regex]::new("\((?:20[012][0-9])[-/.](?:0[1-9]|1[012])[-/.](?:0[1-9]|[12][0-9]|3[01])\s(?:[0-5][0-9]\:[0-5][0-9]\:[0-5][0-9])\)")).Matches($Item).Value.Replace("(","").Replace(")","")
