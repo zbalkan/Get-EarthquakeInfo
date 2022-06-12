@@ -56,7 +56,7 @@ function Get-EarthquakeInfo
         $ProgressPreference = $PreviousProgressReference
 
         $TurkishEncoding = [System.Text.Encoding]::GetEncoding("windows-1254")
-        $Content = $TurkishEncoding.GetString([System.Text.Encoding]::Default.GetBytes($page.Content))
+        $Content = $TurkishEncoding.GetString([System.Text.Encoding]::GetEncoding("windows-1252").GetBytes($page.Content))
 
         $StartIndex = $Content.IndexOf("<pre>") + 7
         $EndIndex = $Content.IndexOf("</pre>") - 4
@@ -79,7 +79,7 @@ function Get-EarthquakeInfo
             $null = ([Regex]::new("[A-Za-z\(\)İıÖöÜüÇçĞğŞş]*")).Matches($Item).Value | Where-Object { $_.Length -gt 0 } | ForEach-Object { $Title += $_ + " "}
             
             $Measurement = ""
-            if ($Title.Contains("Quick") -or $Title.Contains("İlksel"))
+            if ($Title.Contains("Quick") -or $Title.Contains("İlksel") -or $Title.Contains("Ilksel"))
             {
                 $Measurement = "Quick"
                 $Revised = ""
@@ -90,7 +90,7 @@ function Get-EarthquakeInfo
                 $Revised = ([Regex]::new("\((?:20[012][0-9])[-/.](?:0[1-9]|1[012])[-/.](?:0[1-9]|[12][0-9]|3[01])\s(?:[0-5][0-9]\:[0-5][0-9]\:[0-5][0-9])\)")).Matches($Item).Value.Replace("(","").Replace(")","")
             }
 
-            $Title = $Title.Replace(" Quick","").Replace(" İlksel","").Replace(" REVISE","").Replace(" REVIZE","").Replace(" ( )","")
+            $Title = $Title.Replace(" Quick","").Replace(" İlksel","").Replace(" Ilksel","").Replace(" REVISE","").Replace(" REVIZE","").Replace(" ( )","")
             $Data = [PSCustomObject]@{
                 Title = $Title
                 Date = ([Regex]::new('\d{4}\.\d{2}\.\d{2}')).Matches($Item).Value
