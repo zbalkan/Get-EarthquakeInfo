@@ -39,7 +39,11 @@ function Get-EarthquakeInfo
     )
     
     Process {
-        $Page = Invoke-WebRequest -Uri $URL      
+        $PreviousProgressReference = $ProgressPreference
+        $ProgressPreference = [System.Management.Automation.ActionPreference]::SilentlyContinue
+        $Page = Invoke-WebRequest -Uri $URL
+        $ProgressPreference = $PreviousProgressReference
+
         $StartIndex = $Page.Content.IndexOf("<pre>") + 7
         $EndIndex = $page.Content.IndexOf("</pre>") - 4
         $Text = $page.Content.Substring($StartIndex, $EndIndex - $StartIndex)
