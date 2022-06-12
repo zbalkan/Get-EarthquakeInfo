@@ -41,7 +41,14 @@ function Get-EarthquakeInfo
     Process {
         $PreviousProgressReference = $ProgressPreference
         $ProgressPreference = [System.Management.Automation.ActionPreference]::SilentlyContinue
-        $Page = Invoke-WebRequest -Uri $URL
+        if ($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
+        {
+            $Page = Invoke-WebRequest -Uri $URL -Verbose
+        }
+        else
+        {
+            $Page = Invoke-WebRequest -Uri $URL
+        }
         $ProgressPreference = $PreviousProgressReference
 
         $StartIndex = $Page.Content.IndexOf("<pre>") + 7
@@ -52,7 +59,15 @@ function Get-EarthquakeInfo
         if($ResultSize -eq 0) { $ResultSize = $RawList.Count } 
         $List = New-Object System.Collections.ArrayList
 
-        for($i = 6; $i -lt $ResultSize; $i++){ # Skipping since first 6 rows are titles, etc.
+        $Max = $ResultSize
+        if ($RawList.Count -lt $ResultSize)
+        {
+            $Max = $RawList.Count
+        }
+
+        Write-Verbose "Total $Max earthquaqe records have been found."
+
+        for($i = 6; $i -lt $Max; $i++){ # Skipping since first 6 rows are titles, etc.
 
             $Item = $RawList[$i]
             
