@@ -27,6 +27,14 @@ function Get-EarthquakeInfo
     [Parameter(Mandatory=$false,
     ValueFromPipelineByPropertyName=$false,
     Position=0)]
+    [ValidateScript({
+        $uri = [System.Uri]::new($_)
+        if ($uri.IsWellFormedOriginalString()) {
+            $true
+        } else {
+            throw "$_ is invalid. Please provide a valid URL"
+        }
+    })]
     [string]
     $URL = "http://www.koeri.boun.edu.tr/scripts/lasteq.asp",
 
