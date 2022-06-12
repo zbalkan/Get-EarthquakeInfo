@@ -44,7 +44,7 @@ function Get-EarthquakeInfo
     ValueFromPipelineByPropertyName=$false)]
     [ValidateRange(1,500)]
     [int]
-    $ResultSize
+    $ResultSize = 500
     )
     
     Process {
@@ -63,13 +63,10 @@ function Get-EarthquakeInfo
         $Text = $Content.Substring($StartIndex, $EndIndex - $StartIndex)
         
         [string[]]$RawList = $Text.Split("`n")
-
-        $HeaderLineCount = 6  # Skipping since first 6 rows are titles, etc.
-        if ($ResultSize -eq 0) { $ResultSize = $RawList.Count - $HeaderLineCount }
         $EarthquakeRecords = New-Object System.Collections.ArrayList
-
         Write-Verbose "Total $ResultSize earthquake records will be displayed."
 
+        $HeaderLineCount = 6  # Skipping since first 6 rows are titles, etc.
         for($i = $HeaderLineCount; $i -lt $ResultSize + $HeaderLineCount; $i++){
             Write-Debug "Line number: $i"
 
