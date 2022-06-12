@@ -34,11 +34,14 @@ function Get-EarthquakeInfo
     # "Get-EarthquakeInfo | Select-Object -First 50" command which is recommended.
     [Parameter(Mandatory=$false,
     ValueFromPipelineByPropertyName=$false)]
+    [ValidateRange(1,500)]
     [int]
     $ResultSize
     )
     
     Process {
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+
         $PreviousProgressReference = $ProgressPreference
         $ProgressPreference = [System.Management.Automation.ActionPreference]::SilentlyContinue
         if ($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
@@ -51,23 +54,20 @@ function Get-EarthquakeInfo
         }
         $ProgressPreference = $PreviousProgressReference
 
+        $HeaderLineCount = 6  # Skipping since first 6 rows are titles, etc.
+
         $StartIndex = $Page.Content.IndexOf("<pre>") + 7
-        $EndIndex = $page.Content.IndexOf("</pre>") - 4
+        $EndIndex = $Page.Content.IndexOf("</pre>") - 4
         $Text = $page.Content.Substring($StartIndex, $EndIndex - $StartIndex)
         
         [string[]]$RawList = $Text.Split("`n")
-        if($ResultSize -eq 0) { $ResultSize = $RawList.Count } 
+        if($ResultSize -eq 0) { $ResultSize = $RawList.Count - $HeaderLineCount }
         $List = New-Object System.Collections.ArrayList
 
-        $Max = $ResultSize
-        if ($RawList.Count -lt $ResultSize)
-        {
-            $Max = $RawList.Count
-        }
+        Write-Verbose "Total $ResultSize earthquake records will be displayed."
 
-        Write-Verbose "Total $Max earthquaqe records have been found."
-
-        for($i = 6; $i -lt $Max; $i++){ # Skipping since first 6 rows are titles, etc.
+        for($i = $HeaderLineCount; $i -lt $ResultSize + $HeaderLineCount; $i++){
+            Write-Debug "Line number: $i"
 
             $Item = $RawList[$i]
             
@@ -78,13 +78,15 @@ function Get-EarthquakeInfo
             if ($Title.Contains("Quick"))
             {
                 $Measurement = "Quick"
+                $Revised = ""
             }
             elseif ($Title.Contains("REVISE"))
             {
                 $Measurement = "Revised"
+                $Revised = ([Regex]::new("\((?:20[012][0-9])[-/.](?:0[1-9]|1[012])[-/.](?:0[1-9]|[12][0-9]|3[01])\s(?:[0-5][0-9]\:[0-5][0-9]\:[0-5][0-9])\)")).Matches($Item).Value.Replace("(","").Replace(")","")
             }
 
-            $Title = $Title.Replace(" Quick","").Replace(" REVISE","")
+            $Title = $Title.Replace(" Quick","").Replace(" REVISE","").Replace(" ( )","")
             $Data = [PSCustomObject]@{
                 Title = $Title
                 Date = ([Regex]::new('\d{4}\.\d{2}\.\d{2}')).Matches($Item).Value
@@ -94,6 +96,7 @@ function Get-EarthquakeInfo
                 Depth = ([Regex]::new('\d\.\d')).Matches($Item).Value[4]
                 Magnitude = ([Regex]::new('\d\.\d')).Matches($Item).Value[5]
                 Measurement = $Measurement
+                Revised = $Revised
             }
             
             $List.Add($Data) | Out-Null # Because Add() method prints index number to console, we need to add Out-Null
