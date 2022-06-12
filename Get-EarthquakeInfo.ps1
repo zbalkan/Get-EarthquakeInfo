@@ -52,25 +52,21 @@ function Get-EarthquakeInfo
 
         $PreviousProgressReference = $ProgressPreference
         $ProgressPreference = [System.Management.Automation.ActionPreference]::SilentlyContinue
-        if ($PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent)
-        {
-            $Page = Invoke-WebRequest -Uri $URL -Verbose
-        }
-        else
-        {
-            $Page = Invoke-WebRequest -Uri $URL
-        }
+        $Page = Invoke-WebRequest -Uri $URL
         $ProgressPreference = $PreviousProgressReference
 
-        $HeaderLineCount = 6  # Skipping since first 6 rows are titles, etc.
+        $TurkishEncoding = [System.Text.Encoding]::GetEncoding("windows-1254")
+        $Content = $TurkishEncoding.GetString([System.Text.Encoding]::Default.GetBytes($page.Content))
 
-        $StartIndex = $Page.Content.IndexOf("<pre>") + 7
-        $EndIndex = $Page.Content.IndexOf("</pre>") - 4
-        $Text = $page.Content.Substring($StartIndex, $EndIndex - $StartIndex)
+        $StartIndex = $Content.IndexOf("<pre>") + 7
+        $EndIndex = $Content.IndexOf("</pre>") - 4
+        $Text = $Content.Substring($StartIndex, $EndIndex - $StartIndex)
         
         [string[]]$RawList = $Text.Split("`n")
-        if($ResultSize -eq 0) { $ResultSize = $RawList.Count - $HeaderLineCount }
-        $List = New-Object System.Collections.ArrayList
+
+        $HeaderLineCount = 6  # Skipping since first 6 rows are titles, etc.
+        if ($ResultSize -eq 0) { $ResultSize = $RawList.Count - $HeaderLineCount }
+        $EarthquakeRecords = New-Object System.Collections.ArrayList
 
         Write-Verbose "Total $ResultSize earthquake records will be displayed."
 
@@ -78,7 +74,7 @@ function Get-EarthquakeInfo
             Write-Debug "Line number: $i"
 
             $Item = $RawList[$i]
-            
+
             $Title = ""
             $null = ([Regex]::new("[A-Za-z\(\)İıÖöÜüÇçĞğŞş]*")).Matches($Item).Value | Where-Object { $_.Length -gt 0 } | ForEach-Object { $Title += $_ + " "}
             
@@ -94,7 +90,7 @@ function Get-EarthquakeInfo
                 $Revised = ([Regex]::new("\((?:20[012][0-9])[-/.](?:0[1-9]|1[012])[-/.](?:0[1-9]|[12][0-9]|3[01])\s(?:[0-5][0-9]\:[0-5][0-9]\:[0-5][0-9])\)")).Matches($Item).Value.Replace("(","").Replace(")","")
             }
 
-            $Title = $Title.Replace(" Quick","").Replace(" REVISE","").Replace(" ( )","")
+            $Title = $Title.Replace(" Quick","").Replace(" İlksel","").Replace(" REVISE","").Replace(" REVIZE","").Replace(" ( )","")
             $Data = [PSCustomObject]@{
                 Title = $Title
                 Date = ([Regex]::new('\d{4}\.\d{2}\.\d{2}')).Matches($Item).Value
@@ -107,8 +103,8 @@ function Get-EarthquakeInfo
                 Revised = $Revised
             }
             
-            $List.Add($Data) | Out-Null # Because Add() method prints index number to console, we need to add Out-Null
+            $EarthquakeRecords.Add($Data) | Out-Null # Because Add() method prints index number to console, we need to add Out-Null
         }
-        return $List
+        return $EarthquakeRecords
     }
 }
