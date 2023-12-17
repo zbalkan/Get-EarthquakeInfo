@@ -154,19 +154,54 @@ function Get-EarthquakeInfo
             }
         }
 
+        function getContent
+        {
+            param (
+                $URL
+            )
+
+            $MaximumRetries = 5 # Retry 5 times
+            $RetrySleepSeconds = 1 # The time between the retries will increase linearly
+
+            $client = [System.Net.Http.HttpClient]::new()
+            $Content = $null
+            for ($i = 0; $i -lt $MaximumRetries; $i++)
+            {
+                try
+                {
+                    Write-Verbose "Trying to connect to $URL"
+                    $Content = $client.GetStringAsync($URL).GetAwaiter().GetResult()
+                    break
+                }
+                catch
+                {
+                    Write-Verbose "Failed to connect to $URL"
+                    $Attempt = ($i + 1)
+                    $Sleep = $RetrySleepSeconds * $Attempt
+                    Write-Verbose "Waiting for $Sleep second(s)"
+                    Start-Sleep -Seconds $Sleep
+                    Write-Verbose "Retrying (Attempt $Attempt out of $MaximumRetries)..."
+                }
+            }
+            if ($null -eq $Content)
+            {
+                Write-Error "Failed to connect to $URL"
+            }
+            $client.Dispose()
+
+            $TurkishEncoding = [System.Text.Encoding]::GetEncoding('windows-1254')
+            $Content = $TurkishEncoding.GetString([System.Text.Encoding]::GetEncoding('windows-1252').GetBytes($Content))
+
+            return $Content
+        }
+
         function parseLines
         {
             param (
-                $URL,
+                $Content,
                 $ResultSize
             )
-            $PreviousProgressReference = $ProgressPreference
-            $ProgressPreference = [System.Management.Automation.ActionPreference]::SilentlyContinue
-            $Page = Invoke-WebRequest -Uri $URL
-            $ProgressPreference = $PreviousProgressReference
 
-            $TurkishEncoding = [System.Text.Encoding]::GetEncoding('windows-1254')
-            $Content = $TurkishEncoding.GetString([System.Text.Encoding]::GetEncoding('windows-1252').GetBytes($page.Content))
             $StartIndex = $Content.IndexOf('<pre>') + 5
             $EndIndex = $Content.IndexOf('</pre>')
             $Text = $Content.Substring($StartIndex, $EndIndex - $StartIndex)
@@ -212,8 +247,7 @@ function Get-EarthquakeInfo
     {
         $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 
-        $Records = parseLines -URL $URL -ResultSize $ResultSize
-        Write-Verbose "Total $($Lines.Count - $HeaderLineCount) records found."
+        $Records = parseLines -Content (getContent -URL $URL) -ResultSize $ResultSize
         Write-Verbose "Total $ResultSize earthquake records will be displayed."
 
         return parseRecords -Records $Records
