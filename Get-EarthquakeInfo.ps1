@@ -30,6 +30,7 @@
    - Since there is not an API published by KOERI, the data needed to be parsed from plain text in `pre` tags. So there might be issues with uncommon formatting some day.
    - Since Date and Time are separately stored as strings with `yyyy.MM.dd` and `HH.mm.ss` formats, it is easier to group records per day and sort by time. On the other hand, the `DateTime` property is an instance of `DateTime` struct, so that you can make calculations with it.
    - `MeasurementType` propery is an enum which consists two values: `Quick` and `Revised`.#>
+
 function Get-EarthquakeInfo
 {
     [CmdletBinding()]
@@ -162,15 +163,13 @@ function Get-EarthquakeInfo
 
             $MaximumRetries = 5 # Retry 5 times
             $RetrySleepSeconds = 1 # The time between the retries will increase linearly
-
-            $client = [System.Net.Http.HttpClient]::new()
             $Content = $null
             for ($i = 0; $i -lt $MaximumRetries; $i++)
             {
                 try
                 {
                     Write-Verbose "Trying to connect to $URL"
-                    $Content = $client.GetStringAsync($URL).GetAwaiter().GetResult()
+                    $Content = (Invoke-WebRequest -Uri $URL -UseBasicParsing).RawContent
                     break
                 }
                 catch
@@ -187,7 +186,6 @@ function Get-EarthquakeInfo
             {
                 Write-Error "Failed to connect to $URL"
             }
-            $client.Dispose()
 
             $TurkishEncoding = [System.Text.Encoding]::GetEncoding('windows-1254')
             $Content = $TurkishEncoding.GetString([System.Text.Encoding]::GetEncoding('windows-1252').GetBytes($Content))
@@ -225,13 +223,14 @@ function Get-EarthquakeInfo
 
                 $DateMatches = parseDateOnly -Record $Record
                 $TimeMatches = parseTimeOnly -Record $Record
+                $DatetimeMatches = parseDateTime -DateMatches $DateMatches -TimeMatches $TimeMatches
                 Write-Debug "Found $($DateMatches.Count) dates"
 
                 $Data = [PSCustomObject]@{
                     Title           = cleanupTitle -Title $RawTitle
-                    Date            = $DateMatches
-                    Time            = $TimeMatches
-                    DateTime        = parseDateTime -DateMatches $DateMatches -TimeMatches $TimeMatches
+                    Date            = $DateMatches[$DateMatches.Count - 1]        # Last date is the most recent one
+                    Time            = $TimeMatches[$TimeMatches.Count - 1]        # Last time is the most recent one
+                    DateTime        = $DatetimeMatches[$DatetimeMatches.Count -1] # Last datetime is the most recent one
                     Latitude        = ([Regex]::new('\d{2}\.\d{4}')).Matches($Record).Value[0]
                     Longtitude      = ([Regex]::new('\d{2}\.\d{4}')).Matches($Record).Value[1]
                     Depth           = ([Regex]::new('\d\.\d')).Matches($Record).Value[4]
@@ -249,7 +248,6 @@ function Get-EarthquakeInfo
 
         $Records = parseLines -Content (getContent -URL $URL) -ResultSize $ResultSize
         Write-Verbose "Total $ResultSize earthquake records will be displayed."
-
         return parseRecords -Records $Records
     }
 }
